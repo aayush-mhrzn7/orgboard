@@ -1,0 +1,7 @@
+type Organization {
+  id: ID!
+}
+
+type Query {
+organization: Organization!
+}   

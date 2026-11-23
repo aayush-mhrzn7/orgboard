@@ -1,0 +1,28 @@
+{
+  "name": "orgboard-server",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "^1.4.5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "drizzle-kit": "^1.0.0-rc.6"
+  },
+  "scripts": {
+    "dev": "bun run src/server.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "bun run src/db/seed.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.5.2",
+    "dotenv": "^18.0.10",
+    "drizzle-orm": "^1.0.0-rc.6",
+    "graphql": "^17.1.0",
+    "jsonwebtoken": "^9.0.3"
+  }
+}

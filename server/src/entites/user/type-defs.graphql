@@ -1,0 +1,30 @@
+type User {
+  id: ID!
+  name: String!
+  email: String!
+}
+
+type AuthPayload {
+  message: String!
+  status: String!
+  accessToken: String
+  data: User
+}
+
+type MessagePayload {
+  message: String!
+  status: String!
+}
+
+type Query {
+  me: User
+  users: [User!]!
+}
+
+type Mutation {
+  signup(name: String!, email: String!, password: String!): AuthPayload!
+  login(email: String!, password: String!): AuthPayload!
+  logout: MessagePayload!
+  refreshToken: AuthPayload!
+  updateUser(name: String, email: String, password: String): User
+}

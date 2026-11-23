@@ -1,0 +1,1 @@
+ALTER TABLE `posts` ADD `organization_id` text REFERENCES organizations(id);
