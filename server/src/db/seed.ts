@@ -9,7 +9,14 @@ import {
 } from "./schema";
 
 async function seed() {
-  const [alice, bob, cara] = await db
+  await db.delete(postTags);
+  await db.delete(posts);
+  await db.delete(organizationUsers);
+  await db.delete(tags);
+  await db.delete(organizations);
+  await db.delete(users);
+
+  const [alice, bob] = await db
     .insert(users)
     .values([
       {
@@ -22,76 +29,37 @@ async function seed() {
         email: "bob@tekvortex.dev",
         password: "password",
       },
-      {
-        name: "Cara Singh",
-        email: "cara@acme.dev",
-        password: "password",
-      },
     ])
     .returning();
 
-  const [tekvortex, acme] = await db
+  const [workspace] = await db
     .insert(organizations)
-    .values([
-      { name: "Tekvortex" },
-      { name: "Acme Labs" },
-    ])
+    .values({ name: "Orgboard" })
     .returning();
 
   await db.insert(organizationUsers).values([
-    { organizationId: tekvortex!.id, userId: alice!.id },
-    { organizationId: tekvortex!.id, userId: bob!.id },
-    { organizationId: acme!.id, userId: cara!.id },
-    { organizationId: acme!.id, userId: alice!.id },
+    { organizationId: workspace!.id, userId: alice!.id },
+    { organizationId: workspace!.id, userId: bob!.id },
   ]);
 
-  const [graphql, drizzle, auth, learning] = await db
-    .insert(tags)
-    .values([
-      { name: "graphql" },
-      { name: "drizzle" },
-      { name: "auth" },
-      { name: "learning" },
-    ])
-    .returning();
-
-  const [post1, post2, post3] = await db
-    .insert(posts)
-    .values([
-      {
-        title: "Welcome to Tekvortex",
-        content: "Internal kickoff notes for the GraphQL learning track.",
-        authorId: alice!.id,
-        organizationId: tekvortex!.id,
-      },
-      {
-        title: "Drizzle schema tips",
-        content: "How we model orgs, users, and post visibility.",
-        authorId: bob!.id,
-        organizationId: tekvortex!.id,
-      },
-      {
-        title: "Acme onboarding",
-        content: "Only Acme members should see this post.",
-        authorId: cara!.id,
-        organizationId: acme!.id,
-      },
-    ])
-    .returning();
-
-  await db.insert(postTags).values([
-    { postId: post1!.id, tagId: learning!.id },
-    { postId: post1!.id, tagId: graphql!.id },
-    { postId: post2!.id, tagId: drizzle!.id },
-    { postId: post2!.id, tagId: graphql!.id },
-    { postId: post3!.id, tagId: auth!.id },
-    { postId: post3!.id, tagId: learning!.id },
-  ]);
+  const authors = [alice!, bob!];
+  await db.insert(posts).values(
+    Array.from({ length: 100 }, (_, i) => {
+      const n = i + 1;
+      const author = authors[i % authors.length]!;
+      return {
+        title: `Post ${n}`,
+        content: `Body for post ${n}.`,
+        authorId: author.id,
+        organizationId: workspace!.id,
+      };
+    }),
+  );
 
   console.log("Seeded:", {
-    users: [alice!.email, bob!.email, cara!.email],
-    organizations: [tekvortex!.name, acme!.name],
-    posts: [post1!.title, post2!.title, post3!.title],
+    users: [alice!.email, bob!.email],
+    workspace: workspace!.name,
+    posts: 100,
   });
 }
 
