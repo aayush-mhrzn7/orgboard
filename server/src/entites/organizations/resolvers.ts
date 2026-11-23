@@ -1,12 +1,14 @@
 import { GraphQLError } from "graphql";
 import { and, eq } from "drizzle-orm";
 import db from "../../db";
-import { organizations, organizationUsers, users } from "../../db/schema";
-import type { organizationType } from "../../db/schema";
+import { organizations, organizationUsers, posts, users } from "../../db/schema";
+import type { organizationType, organizationUserType } from "../../db/schema";
 import { notFound, requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
+import { toPost } from "../posts/resolvers";
+import type { OrganizationParent, OrganizationUserParent } from "./types";
 
-function toOrganization(row: organizationType) {
+function toOrganization(row: organizationType): OrganizationParent {
   return {
     id: row.id,
     name: row.name,
@@ -15,7 +17,46 @@ function toOrganization(row: organizationType) {
   };
 }
 
+function toOrganizationUser(row: organizationUserType): OrganizationUserParent {
+  return {
+    organizationId: row.organizationId!,
+    userId: row.userId!,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
 const resolvers: Resolvers = {
+  Organization: {
+    organizationUsers: async (parent) => {
+      const rows = await db
+        .select()
+        .from(organizationUsers)
+        .where(eq(organizationUsers.organizationId, parent.id));
+      return rows.map(toOrganizationUser);
+    },
+
+    posts: async (parent) => {
+      const rows = await db
+        .select()
+        .from(posts)
+        .where(eq(posts.organizationId, parent.id));
+      return rows.map(toPost);
+    },
+  },
+
+  OrganizationUser: {
+    user: async (parent) => {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, parent.userId))
+        .limit(1);
+      if (!user) notFound("User not found");
+      return user;
+    },
+  },
+
   Mutation: {
     createOrganization: async (_parent, args, context) => {
       const auth = requireUser(context);
@@ -122,6 +163,14 @@ const resolvers: Resolvers = {
         .where(eq(organizations.id, args.id))
         .limit(1);
       return organization ? toOrganization(organization) : null;
+    },
+
+    organizationUsers: async (_parent, args) => {
+      const rows = await db
+        .select()
+        .from(organizationUsers)
+        .where(eq(organizationUsers.organizationId, args.organizationId));
+      return rows.map(toOrganizationUser);
     },
   },
 };

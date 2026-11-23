@@ -1,12 +1,13 @@
 import { GraphQLError } from "graphql";
 import { eq } from "drizzle-orm";
 import db from "../../db";
-import { organizations, posts } from "../../db/schema";
+import { organizations, posts, users } from "../../db/schema";
 import type { postType } from "../../db/schema";
 import { notFound, requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
+import type { PostParent } from "./types";
 
-function toPost(row: postType) {
+export function toPost(row: postType): PostParent {
   return {
     id: row.id,
     title: row.title,
@@ -19,6 +20,19 @@ function toPost(row: postType) {
 }
 
 const resolvers: Resolvers = {
+  Post: {
+    author: async (parent) => {
+      if (!parent.authorId) notFound("Post has no author");
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, parent.authorId))
+        .limit(1);
+      if (!user) notFound("Author not found");
+      return user;
+    },
+  },
+
   Mutation: {
     createPost: async (_parent, args, context) => {
       const auth = requireUser(context);

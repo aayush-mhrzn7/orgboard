@@ -3,6 +3,7 @@ type Post {
   title: String!
   content: String!
   authorId: ID
+  author:User!
   organizationId: ID
   createdAt: String!
   updatedAt: String!

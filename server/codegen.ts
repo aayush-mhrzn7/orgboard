@@ -10,6 +10,11 @@ const config: CodegenConfig = {
         useTypeImports: true,
         useIndexSignature: true,
         enumsAsTypes: true,
+        mappers: {
+          Post: "../entites/posts/types#PostParent",
+          Organization: "../entites/organizations/types#OrganizationParent",
+          OrganizationUser: "../entites/organizations/types#OrganizationUserParent",
+        },
         scalars: {
           ID: "string",
         },

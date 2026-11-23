@@ -1,4 +1,6 @@
 import type { GraphQLResolveInfo } from 'graphql';
+import type { PostParent } from '../entites/posts/types';
+import type { OrganizationParent, OrganizationUserParent } from '../entites/organizations/types';
 import type { Context } from '../context';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -134,11 +136,23 @@ export type Organization = {
   createdAt: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  organizationUsers: Array<OrganizationUser>;
+  posts: Array<Post>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type OrganizationUser = {
+  __typename?: 'OrganizationUser';
+  createdAt: Scalars['String']['output'];
+  organizationId: Scalars['ID']['output'];
+  updatedAt: Scalars['String']['output'];
+  user: User;
+  userId: Scalars['ID']['output'];
 };
 
 export type Post = {
   __typename?: 'Post';
+  author: User;
   authorId?: Maybe<Scalars['ID']['output']>;
   content: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
@@ -152,6 +166,7 @@ export type Query = {
   __typename?: 'Query';
   me?: Maybe<User>;
   organization?: Maybe<Organization>;
+  organizationUsers: Array<OrganizationUser>;
   organizations: Array<Organization>;
   post?: Maybe<Post>;
   posts: Array<Post>;
@@ -163,6 +178,11 @@ export type Query = {
 
 export type QueryOrganizationArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryOrganizationUsersArgs = {
+  organizationId: Scalars['ID']['input'];
 };
 
 
@@ -269,8 +289,9 @@ export type ResolversTypes = ResolversObject<{
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   MessagePayload: ResolverTypeWrapper<MessagePayload>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
-  Organization: ResolverTypeWrapper<Organization>;
-  Post: ResolverTypeWrapper<Post>;
+  Organization: ResolverTypeWrapper<OrganizationParent>;
+  OrganizationUser: ResolverTypeWrapper<OrganizationUserParent>;
+  Post: ResolverTypeWrapper<PostParent>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Tag: ResolverTypeWrapper<Tag>;
@@ -284,8 +305,9 @@ export type ResolversParentTypes = ResolversObject<{
   ID: Scalars['ID']['output'];
   MessagePayload: MessagePayload;
   Mutation: Record<PropertyKey, never>;
-  Organization: Organization;
-  Post: Post;
+  Organization: OrganizationParent;
+  OrganizationUser: OrganizationUserParent;
+  Post: PostParent;
   Query: Record<PropertyKey, never>;
   String: Scalars['String']['output'];
   Tag: Tag;
@@ -327,10 +349,21 @@ export type OrganizationResolvers<ContextType = Context, ParentType extends Reso
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  organizationUsers?: Resolver<Array<ResolversTypes['OrganizationUser']>, ParentType, ContextType>;
+  posts?: Resolver<Array<ResolversTypes['Post']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
+export type OrganizationUserResolvers<ContextType = Context, ParentType extends ResolversParentTypes['OrganizationUser'] = ResolversParentTypes['OrganizationUser']> = ResolversObject<{
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  organizationId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+}>;
+
 export type PostResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Post'] = ResolversParentTypes['Post']> = ResolversObject<{
+  author?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
   authorId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -343,6 +376,7 @@ export type PostResolvers<ContextType = Context, ParentType extends ResolversPar
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   organization?: Resolver<Maybe<ResolversTypes['Organization']>, ParentType, ContextType, RequireFields<QueryOrganizationArgs, 'id'>>;
+  organizationUsers?: Resolver<Array<ResolversTypes['OrganizationUser']>, ParentType, ContextType, RequireFields<QueryOrganizationUsersArgs, 'organizationId'>>;
   organizations?: Resolver<Array<ResolversTypes['Organization']>, ParentType, ContextType>;
   post?: Resolver<Maybe<ResolversTypes['Post']>, ParentType, ContextType, RequireFields<QueryPostArgs, 'id'>>;
   posts?: Resolver<Array<ResolversTypes['Post']>, ParentType, ContextType>;
@@ -369,6 +403,7 @@ export type Resolvers<ContextType = Context> = ResolversObject<{
   MessagePayload?: MessagePayloadResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Organization?: OrganizationResolvers<ContextType>;
+  OrganizationUser?: OrganizationUserResolvers<ContextType>;
   Post?: PostResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Tag?: TagResolvers<ContextType>;
