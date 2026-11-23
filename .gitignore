@@ -1,0 +1,23 @@
+# dependencies
+node_modules
+
+# bun
+.bun
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+logs
+*.log
+
+# os
+.DS_Store
+Thumbs.db
+
+# editors
+.idea
+*.swp
+*.swo

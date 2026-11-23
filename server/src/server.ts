@@ -1,12 +1,12 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
-import { createContext } from "./context";
+import { createContext, type Context } from "./context";
 import organizations from "./entites/organizations";
 import posts from "./entites/posts";
 import tags from "./entites/tags";
 import users from "./entites/user";
 
-const server = new ApolloServer({
+const server = new ApolloServer<Context>({
   typeDefs: [
     organizations.typeDefs,
     posts.typeDefs,

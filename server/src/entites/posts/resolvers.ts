@@ -1,5 +1,88 @@
-const resolvers = {
+import { GraphQLError } from "graphql";
+import { eq } from "drizzle-orm";
+import db from "../../db";
+import { organizations, posts } from "../../db/schema";
+import type { postType } from "../../db/schema";
+import { notFound, requireUser } from "../../libs/auth";
+import type { Resolvers } from "../../types/generated";
 
+function toPost(row: postType) {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    authorId: row.authorId,
+    organizationId: row.organizationId,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
 }
+
+const resolvers: Resolvers = {
+  Mutation: {
+    createPost: async (_parent, args, context) => {
+      const auth = requireUser(context);
+      const [organization] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, args.organizationId))
+        .limit(1);
+      if (!organization) notFound("Organization not found");
+
+      const [post] = await db
+        .insert(posts)
+        .values({
+          title: args.title,
+          content: args.content,
+          authorId: auth.userId,
+          organizationId: args.organizationId,
+        })
+        .returning();
+      if (!post) throw new GraphQLError("Failed to create post");
+      return toPost(post);
+    },
+
+    updatePost: async (_parent, args, context) => {
+      requireUser(context);
+      const [post] = await db
+        .update(posts)
+        .set({
+          ...(args.title != null ? { title: args.title } : {}),
+          ...(args.content != null ? { content: args.content } : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(posts.id, args.id))
+        .returning();
+      if (!post) notFound("Post not found");
+      return toPost(post);
+    },
+
+    deletePost: async (_parent, args, context) => {
+      requireUser(context);
+      const [post] = await db
+        .delete(posts)
+        .where(eq(posts.id, args.id))
+        .returning();
+      if (!post) notFound("Post not found");
+      return toPost(post);
+    },
+  },
+
+  Query: {
+    posts: async () => {
+      const rows = await db.select().from(posts);
+      return rows.map(toPost);
+    },
+
+    post: async (_parent, args) => {
+      const [post] = await db
+        .select()
+        .from(posts)
+        .where(eq(posts.id, args.id))
+        .limit(1);
+      return post ? toPost(post) : null;
+    },
+  },
+};
 
 export default resolvers;

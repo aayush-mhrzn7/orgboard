@@ -3,17 +3,10 @@ import { eq } from "drizzle-orm";
 import db from "../../db";
 import { users } from "../../db/schema";
 import type { Context } from "../../context";
+import { requireUser } from "../../libs/auth";
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from "../../libs/cookies";
 import { generateToken, verifyToken } from "../../libs/jwt";
-
-function requireUser(context: Context) {
-  if (!context.user) {
-    throw new GraphQLError("Unauthorized", {
-      extensions: { code: "UNAUTHENTICATED" },
-    });
-  }
-  return context.user;
-}
+import type { Resolvers } from "../../types/generated";
 
 function issueTokens(context: Context, userId: string) {
   const accessToken = generateToken(userId, "access");
@@ -22,13 +15,9 @@ function issueTokens(context: Context, userId: string) {
   return accessToken;
 }
 
-const resolvers = {
+const resolvers: Resolvers = {
   Mutation: {
-    signup: async (
-      _parent: unknown,
-      args: { name: string; email: string; password: string },
-      context: Context,
-    ) => {
+    signup: async (_parent, args, context) => {
       const existing = await db
         .select()
         .from(users)
@@ -58,11 +47,7 @@ const resolvers = {
       };
     },
 
-    login: async (
-      _parent: unknown,
-      args: { email: string; password: string },
-      context: Context,
-    ) => {
+    login: async (_parent, args, context) => {
       const [user] = await db
         .select()
         .from(users)
@@ -84,7 +69,7 @@ const resolvers = {
       };
     },
 
-    logout: async (_parent: unknown, _args: unknown, context: Context) => {
+    logout: async (_parent, _args, context) => {
       clearRefreshToken(context.res);
       return {
         message: "Logged out",
@@ -92,7 +77,7 @@ const resolvers = {
       };
     },
 
-    refreshToken: async (_parent: unknown, _args: unknown, context: Context) => {
+    refreshToken: async (_parent, _args, context) => {
       const token = getRefreshToken(context.req);
       if (!token) {
         throw new GraphQLError("No refresh token", {
@@ -118,28 +103,24 @@ const resolvers = {
       };
     },
 
-    updateUser: async (
-      _parent: unknown,
-      args: { name?: string; email?: string; password?: string },
-      context: Context,
-    ) => {
+    updateUser: async (_parent, args, context) => {
       const auth = requireUser(context);
       const [user] = await db
         .update(users)
         .set({
-          ...(args.name !== undefined ? { name: args.name } : {}),
-          ...(args.email !== undefined ? { email: args.email } : {}),
-          ...(args.password !== undefined ? { password: args.password } : {}),
+          ...(typeof args.name === "string" ? { name: args.name } : {}),
+          ...(typeof args.email === "string" ? { email: args.email } : {}),
+          ...(typeof args.password === "string" ? { password: args.password } : {}),
           updatedAt: new Date(),
         })
         .where(eq(users.id, auth.userId))
         .returning();
-      return user;
+      return user ?? null;
     },
   },
 
   Query: {
-    me: async (_parent: unknown, _args: unknown, context: Context) => {
+    me: async (_parent, _args, context) => {
       const auth = requireUser(context);
       const [user] = await db
         .select()
