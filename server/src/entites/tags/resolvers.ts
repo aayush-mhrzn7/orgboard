@@ -50,12 +50,14 @@ const resolvers: Resolvers = {
   },
 
   Query: {
-    tags: async () => {
+    tags: async (_parent, _args, context) => {
+      requireUser(context);
       const rows = await db.select().from(tags);
       return rows.map(toTag);
     },
 
-    tag: async (_parent, args) => {
+    tag: async (_parent, args, context) => {
+      requireUser(context);
       const [tag] = await db
         .select()
         .from(tags)

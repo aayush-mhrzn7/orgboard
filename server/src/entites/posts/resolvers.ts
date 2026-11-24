@@ -21,7 +21,8 @@ export function toPost(row: postType): PostParent {
 
 const resolvers: Resolvers = {
   Post: {
-    author: async (parent) => {
+    author: async (parent, _args, context) => {
+      requireUser(context);
       if (!parent.authorId) notFound("Post has no author");
       const [user] = await db
         .select()
@@ -83,12 +84,14 @@ const resolvers: Resolvers = {
   },
 
   Query: {
-    posts: async () => {
+    posts: async (_parent, _args, context) => {
+      requireUser(context);
       const rows = await db.select().from(posts);
       return rows.map(toPost);
     },
 
-    post: async (_parent, args) => {
+    post: async (_parent, args, context) => {
+      requireUser(context);
       const [post] = await db
         .select()
         .from(posts)

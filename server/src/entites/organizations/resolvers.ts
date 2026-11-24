@@ -32,7 +32,8 @@ function toOrganizationUser(row: organizationUserType): OrganizationUserParent {
 
 const resolvers: Resolvers = {
   Organization: {
-    organizationUsers: async (parent) => {
+    organizationUsers: async (parent, _args, context) => {
+      requireUser(context);
       const rows = await db
         .select()
         .from(organizationUsers)
@@ -40,7 +41,8 @@ const resolvers: Resolvers = {
       return rows.map(toOrganizationUser);
     },
 
-    posts: async (parent) => {
+    posts: async (parent, _args, context) => {
+      requireUser(context);
       const rows = await db
         .select()
         .from(posts)
@@ -50,7 +52,8 @@ const resolvers: Resolvers = {
   },
 
   OrganizationUser: {
-    user: async (parent) => {
+    user: async (parent, _args, context) => {
+      requireUser(context);
       const [user] = await db
         .select()
         .from(users)
@@ -165,12 +168,14 @@ const resolvers: Resolvers = {
   },
 
   Query: {
-    organizations: async () => {
+    organizations: async (_parent, _args, context) => {
+      requireUser(context);
       const rows = await db.select().from(organizations);
       return rows.map(toOrganization);
     },
 
-    organization: async (_parent, args) => {
+    organization: async (_parent, args, context) => {
+      requireUser(context);
       const [organization] = await db
         .select()
         .from(organizations)
@@ -179,7 +184,8 @@ const resolvers: Resolvers = {
       return organization ? toOrganization(organization) : null;
     },
 
-    organizationUsers: async (_parent, args) => {
+    organizationUsers: async (_parent, args, context) => {
+      requireUser(context);
       const rows = await db
         .select()
         .from(organizationUsers)
