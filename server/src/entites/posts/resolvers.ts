@@ -1,10 +1,10 @@
-import { GraphQLError } from "graphql";
 import { eq } from "drizzle-orm";
 import db from "../../db";
 import { organizations, posts, users } from "../../db/schema";
 import type { postType } from "../../db/schema";
 import { notFound, requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
+import { apiError, postSuccess } from "../shared/response";
 import type { PostParent } from "./types";
 
 export function toPost(row: postType): PostParent {
@@ -41,7 +41,7 @@ const resolvers: Resolvers = {
         .from(organizations)
         .where(eq(organizations.id, args.organizationId))
         .limit(1);
-      if (!organization) notFound("Organization not found");
+      if (!organization) return apiError("Organization not found", "NOT_FOUND");
 
       const [post] = await db
         .insert(posts)
@@ -52,8 +52,8 @@ const resolvers: Resolvers = {
           organizationId: args.organizationId,
         })
         .returning();
-      if (!post) throw new GraphQLError("Failed to create post");
-      return toPost(post);
+      if (!post) return apiError("Failed to create post", "INTERNAL");
+      return postSuccess("Post created", toPost(post));
     },
 
     updatePost: async (_parent, args, context) => {
@@ -67,8 +67,8 @@ const resolvers: Resolvers = {
         })
         .where(eq(posts.id, args.id))
         .returning();
-      if (!post) notFound("Post not found");
-      return toPost(post);
+      if (!post) return apiError("Post not found", "NOT_FOUND");
+      return postSuccess("Post updated", toPost(post));
     },
 
     deletePost: async (_parent, args, context) => {
@@ -77,8 +77,8 @@ const resolvers: Resolvers = {
         .delete(posts)
         .where(eq(posts.id, args.id))
         .returning();
-      if (!post) notFound("Post not found");
-      return toPost(post);
+      if (!post) return apiError("Post not found", "NOT_FOUND");
+      return postSuccess("Post deleted", toPost(post));
     },
   },
 

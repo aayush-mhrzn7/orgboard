@@ -1,4 +1,3 @@
-import { GraphQLError } from "graphql";
 import { and, eq } from "drizzle-orm";
 import db from "../../db";
 import { organizations, organizationUsers, posts, users } from "../../db/schema";
@@ -6,6 +5,11 @@ import type { organizationType, organizationUserType } from "../../db/schema";
 import { notFound, requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
 import { toPost } from "../posts/resolvers";
+import {
+  apiError,
+  membershipSuccess,
+  organizationSuccess,
+} from "../shared/response";
 import type { OrganizationParent, OrganizationUserParent } from "./types";
 
 function toOrganization(row: organizationType): OrganizationParent {
@@ -65,13 +69,16 @@ const resolvers: Resolvers = {
         .values({ name: args.name })
         .returning();
       if (!organization) {
-        throw new GraphQLError("Failed to create organization");
+        return apiError("Failed to create organization", "INTERNAL");
       }
       await db.insert(organizationUsers).values({
         organizationId: organization.id,
         userId: auth.userId,
       });
-      return toOrganization(organization);
+      return organizationSuccess(
+        "Organization created",
+        toOrganization(organization),
+      );
     },
 
     updateOrganization: async (_parent, args, context) => {
@@ -81,8 +88,11 @@ const resolvers: Resolvers = {
         .set({ name: args.name, updatedAt: new Date() })
         .where(eq(organizations.id, args.id))
         .returning();
-      if (!organization) notFound("Organization not found");
-      return toOrganization(organization);
+      if (!organization) return apiError("Organization not found", "NOT_FOUND");
+      return organizationSuccess(
+        "Organization updated",
+        toOrganization(organization),
+      );
     },
 
     deleteOrganization: async (_parent, args, context) => {
@@ -91,8 +101,11 @@ const resolvers: Resolvers = {
         .delete(organizations)
         .where(eq(organizations.id, args.id))
         .returning();
-      if (!organization) notFound("Organization not found");
-      return toOrganization(organization);
+      if (!organization) return apiError("Organization not found", "NOT_FOUND");
+      return organizationSuccess(
+        "Organization deleted",
+        toOrganization(organization),
+      );
     },
 
     addUserToOrganization: async (_parent, args, context) => {
@@ -102,14 +115,14 @@ const resolvers: Resolvers = {
         .from(organizations)
         .where(eq(organizations.id, args.organizationId))
         .limit(1);
-      if (!organization) notFound("Organization not found");
+      if (!organization) return apiError("Organization not found", "NOT_FOUND");
 
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.id, args.userId))
         .limit(1);
-      if (!user) notFound("User not found");
+      if (!user) return apiError("User not found", "NOT_FOUND");
 
       const [existing] = await db
         .select()
@@ -122,16 +135,17 @@ const resolvers: Resolvers = {
         )
         .limit(1);
       if (existing) {
-        throw new GraphQLError("User is already in this organization", {
-          extensions: { code: "BAD_USER_INPUT" },
-        });
+        return apiError(
+          "User is already in this organization",
+          "BAD_USER_INPUT",
+        );
       }
 
       await db.insert(organizationUsers).values({
         organizationId: args.organizationId,
         userId: args.userId,
       });
-      return true;
+      return membershipSuccess("User added to organization");
     },
 
     removeUserFromOrganization: async (_parent, args, context) => {
@@ -145,8 +159,8 @@ const resolvers: Resolvers = {
           ),
         )
         .returning();
-      if (!removed) notFound("Membership not found");
-      return true;
+      if (!removed) return apiError("Membership not found", "NOT_FOUND");
+      return membershipSuccess("User removed from organization");
     },
   },
 

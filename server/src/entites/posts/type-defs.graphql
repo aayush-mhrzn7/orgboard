@@ -3,7 +3,7 @@ type Post {
   title: String!
   content: String!
   authorId: ID
-  author:User!
+  author: User!
   organizationId: ID
   createdAt: String!
   updatedAt: String!
@@ -15,7 +15,7 @@ type Query {
 }
 
 type Mutation {
-  createPost(title: String!, content: String!, organizationId: ID!): Post!
-  updatePost(id: ID!, title: String, content: String): Post!
-  deletePost(id: ID!): Post!
+  createPost(title: String!, content: String!, organizationId: ID!): APIResponse!
+  updatePost(id: ID!, title: String, content: String): APIResponse!
+  deletePost(id: ID!): APIResponse!
 }

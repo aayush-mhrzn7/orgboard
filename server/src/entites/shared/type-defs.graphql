@@ -1,0 +1,49 @@
+type APIError {
+  message: String!
+  code: String!
+}
+
+type AuthSuccess {
+  message: String!
+  accessToken: String
+  user: User
+}
+
+type MessageSuccess {
+  message: String!
+}
+
+type UserSuccess {
+  message: String!
+  user: User!
+}
+
+type OrganizationSuccess {
+  message: String!
+  organization: Organization!
+}
+
+type PostSuccess {
+  message: String!
+  post: Post!
+}
+
+type TagSuccess {
+  message: String!
+  tag: Tag!
+}
+
+type MembershipSuccess {
+  message: String!
+  success: Boolean!
+}
+
+union APIResponse =
+    AuthSuccess
+  | MessageSuccess
+  | UserSuccess
+  | OrganizationSuccess
+  | PostSuccess
+  | TagSuccess
+  | MembershipSuccess
+  | APIError

@@ -22,10 +22,9 @@ type Query {
 }
 
 type Mutation {
-  createOrganization(name: String!): Organization!
-  updateOrganization(id: ID!, name: String!): Organization!
-  deleteOrganization(id: ID!): Organization!
-  addUserToOrganization(organizationId: ID!, userId: ID!): Boolean!
-  removeUserFromOrganization(organizationId: ID!, userId: ID!): Boolean!
+  createOrganization(name: String!): APIResponse!
+  updateOrganization(id: ID!, name: String!): APIResponse!
+  deleteOrganization(id: ID!): APIResponse!
+  addUserToOrganization(organizationId: ID!, userId: ID!): APIResponse!
+  removeUserFromOrganization(organizationId: ID!, userId: ID!): APIResponse!
 }
-

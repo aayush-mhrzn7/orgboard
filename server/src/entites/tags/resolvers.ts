@@ -1,10 +1,10 @@
-import { GraphQLError } from "graphql";
 import { eq } from "drizzle-orm";
 import db from "../../db";
 import { tags } from "../../db/schema";
 import type { tagType } from "../../db/schema";
-import { notFound, requireUser } from "../../libs/auth";
+import { requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
+import { apiError, tagSuccess } from "../shared/response";
 
 function toTag(row: tagType) {
   return {
@@ -23,8 +23,8 @@ const resolvers: Resolvers = {
         .insert(tags)
         .values({ name: args.name })
         .returning();
-      if (!tag) throw new GraphQLError("Failed to create tag");
-      return toTag(tag);
+      if (!tag) return apiError("Failed to create tag", "INTERNAL");
+      return tagSuccess("Tag created", toTag(tag));
     },
 
     updateTag: async (_parent, args, context) => {
@@ -34,8 +34,8 @@ const resolvers: Resolvers = {
         .set({ name: args.name, updatedAt: new Date() })
         .where(eq(tags.id, args.id))
         .returning();
-      if (!tag) notFound("Tag not found");
-      return toTag(tag);
+      if (!tag) return apiError("Tag not found", "NOT_FOUND");
+      return tagSuccess("Tag updated", toTag(tag));
     },
 
     deleteTag: async (_parent, args, context) => {
@@ -44,8 +44,8 @@ const resolvers: Resolvers = {
         .delete(tags)
         .where(eq(tags.id, args.id))
         .returning();
-      if (!tag) notFound("Tag not found");
-      return toTag(tag);
+      if (!tag) return apiError("Tag not found", "NOT_FOUND");
+      return tagSuccess("Tag deleted", toTag(tag));
     },
   },
 

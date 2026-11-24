@@ -11,7 +11,7 @@ type Query {
 }
 
 type Mutation {
-  createTag(name: String!): Tag!
-  updateTag(id: ID!, name: String!): Tag!
-  deleteTag(id: ID!): Tag!
+  createTag(name: String!): APIResponse!
+  updateTag(id: ID!, name: String!): APIResponse!
+  deleteTag(id: ID!): APIResponse!
 }

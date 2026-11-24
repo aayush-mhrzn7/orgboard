@@ -4,6 +4,7 @@ import type { OrganizationParent, OrganizationUserParent } from '../entites/orga
 import type { Context } from '../context';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -14,38 +15,50 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
-export type AuthPayload = {
-  __typename?: 'AuthPayload';
-  accessToken?: Maybe<Scalars['String']['output']>;
-  data?: Maybe<User>;
+export type ApiError = {
+  __typename?: 'APIError';
+  code: Scalars['String']['output'];
   message: Scalars['String']['output'];
-  status: Scalars['String']['output'];
 };
 
-export type MessagePayload = {
-  __typename?: 'MessagePayload';
+export type ApiResponse = ApiError | AuthSuccess | MembershipSuccess | MessageSuccess | OrganizationSuccess | PostSuccess | TagSuccess | UserSuccess;
+
+export type AuthSuccess = {
+  __typename?: 'AuthSuccess';
+  accessToken?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
-  status: Scalars['String']['output'];
+  user?: Maybe<User>;
+};
+
+export type MembershipSuccess = {
+  __typename?: 'MembershipSuccess';
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type MessageSuccess = {
+  __typename?: 'MessageSuccess';
+  message: Scalars['String']['output'];
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addUserToOrganization: Scalars['Boolean']['output'];
-  createOrganization: Organization;
-  createPost: Post;
-  createTag: Tag;
-  deleteOrganization: Organization;
-  deletePost: Post;
-  deleteTag: Tag;
-  login: AuthPayload;
-  logout: MessagePayload;
-  refreshToken: AuthPayload;
-  removeUserFromOrganization: Scalars['Boolean']['output'];
-  signup: AuthPayload;
-  updateOrganization: Organization;
-  updatePost: Post;
-  updateTag: Tag;
-  updateUser?: Maybe<User>;
+  addUserToOrganization: ApiResponse;
+  createOrganization: ApiResponse;
+  createPost: ApiResponse;
+  createTag: ApiResponse;
+  deleteOrganization: ApiResponse;
+  deletePost: ApiResponse;
+  deleteTag: ApiResponse;
+  login: ApiResponse;
+  logout: ApiResponse;
+  refreshToken: ApiResponse;
+  removeUserFromOrganization: ApiResponse;
+  signup: ApiResponse;
+  updateOrganization: ApiResponse;
+  updatePost: ApiResponse;
+  updateTag: ApiResponse;
+  updateUser: ApiResponse;
 };
 
 
@@ -141,6 +154,12 @@ export type Organization = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type OrganizationSuccess = {
+  __typename?: 'OrganizationSuccess';
+  message: Scalars['String']['output'];
+  organization: Organization;
+};
+
 export type OrganizationUser = {
   __typename?: 'OrganizationUser';
   createdAt: Scalars['String']['output'];
@@ -160,6 +179,12 @@ export type Post = {
   organizationId?: Maybe<Scalars['ID']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
+};
+
+export type PostSuccess = {
+  __typename?: 'PostSuccess';
+  message: Scalars['String']['output'];
+  post: Post;
 };
 
 export type Query = {
@@ -203,11 +228,23 @@ export type Tag = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type TagSuccess = {
+  __typename?: 'TagSuccess';
+  message: Scalars['String']['output'];
+  tag: Tag;
+};
+
 export type User = {
   __typename?: 'User';
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+};
+
+export type UserSuccess = {
+  __typename?: 'UserSuccess';
+  message: Scalars['String']['output'];
+  user: User;
 };
 
 export type WithIndex<TObject> = TObject & Record<string, any>;
@@ -280,69 +317,112 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 
 
 
+/** Mapping of union types */
+export type ResolversUnionTypes<_RefType extends Record<string, unknown>> = ResolversObject<{
+  APIResponse:
+    | ( ApiError )
+    | ( AuthSuccess )
+    | ( MembershipSuccess )
+    | ( MessageSuccess )
+    | ( Omit<OrganizationSuccess, 'organization'> & { organization: _RefType['Organization'] } )
+    | ( Omit<PostSuccess, 'post'> & { post: _RefType['Post'] } )
+    | ( TagSuccess )
+    | ( UserSuccess )
+  ;
+}>;
 
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
-  AuthPayload: ResolverTypeWrapper<AuthPayload>;
+  APIError: ResolverTypeWrapper<ApiError>;
+  APIResponse: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['APIResponse']>;
+  AuthSuccess: ResolverTypeWrapper<AuthSuccess>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
-  MessagePayload: ResolverTypeWrapper<MessagePayload>;
+  MembershipSuccess: ResolverTypeWrapper<MembershipSuccess>;
+  MessageSuccess: ResolverTypeWrapper<MessageSuccess>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Organization: ResolverTypeWrapper<OrganizationParent>;
+  OrganizationSuccess: ResolverTypeWrapper<Omit<OrganizationSuccess, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   OrganizationUser: ResolverTypeWrapper<OrganizationUserParent>;
   Post: ResolverTypeWrapper<PostParent>;
+  PostSuccess: ResolverTypeWrapper<Omit<PostSuccess, 'post'> & { post: ResolversTypes['Post'] }>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Tag: ResolverTypeWrapper<Tag>;
+  TagSuccess: ResolverTypeWrapper<TagSuccess>;
   User: ResolverTypeWrapper<User>;
+  UserSuccess: ResolverTypeWrapper<UserSuccess>;
 }>;
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
-  AuthPayload: AuthPayload;
+  APIError: ApiError;
+  APIResponse: ResolversUnionTypes<ResolversParentTypes>['APIResponse'];
+  AuthSuccess: AuthSuccess;
   Boolean: Scalars['Boolean']['output'];
   ID: Scalars['ID']['output'];
-  MessagePayload: MessagePayload;
+  MembershipSuccess: MembershipSuccess;
+  MessageSuccess: MessageSuccess;
   Mutation: Record<PropertyKey, never>;
   Organization: OrganizationParent;
+  OrganizationSuccess: Omit<OrganizationSuccess, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   OrganizationUser: OrganizationUserParent;
   Post: PostParent;
+  PostSuccess: Omit<PostSuccess, 'post'> & { post: ResolversParentTypes['Post'] };
   Query: Record<PropertyKey, never>;
   String: Scalars['String']['output'];
   Tag: Tag;
+  TagSuccess: TagSuccess;
   User: User;
+  UserSuccess: UserSuccess;
 }>;
 
-export type AuthPayloadResolvers<ContextType = Context, ParentType extends ResolversParentTypes['AuthPayload'] = ResolversParentTypes['AuthPayload']> = ResolversObject<{
+export type ApiErrorResolvers<ContextType = Context, ParentType extends ResolversParentTypes['APIError'] = ResolversParentTypes['APIError']> = ResolversObject<{
+  code?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type ApiResponseResolvers<ContextType = Context, ParentType extends ResolversParentTypes['APIResponse'] = ResolversParentTypes['APIResponse']> = ResolversObject<{
+  __resolveType: TypeResolveFn<'APIError' | 'AuthSuccess' | 'MembershipSuccess' | 'MessageSuccess' | 'OrganizationSuccess' | 'PostSuccess' | 'TagSuccess' | 'UserSuccess', ParentType, ContextType>;
+}>;
+
+export type AuthSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['AuthSuccess'] = ResolversParentTypes['AuthSuccess']> = ResolversObject<{
   accessToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  data?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
-export type MessagePayloadResolvers<ContextType = Context, ParentType extends ResolversParentTypes['MessagePayload'] = ResolversParentTypes['MessagePayload']> = ResolversObject<{
+export type MembershipSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['MembershipSuccess'] = ResolversParentTypes['MembershipSuccess']> = ResolversObject<{
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type MessageSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['MessageSuccess'] = ResolversParentTypes['MessageSuccess']> = ResolversObject<{
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
 export type MutationResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = ResolversObject<{
-  addUserToOrganization?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAddUserToOrganizationArgs, 'organizationId' | 'userId'>>;
-  createOrganization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType, RequireFields<MutationCreateOrganizationArgs, 'name'>>;
-  createPost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, RequireFields<MutationCreatePostArgs, 'content' | 'organizationId' | 'title'>>;
-  createTag?: Resolver<ResolversTypes['Tag'], ParentType, ContextType, RequireFields<MutationCreateTagArgs, 'name'>>;
-  deleteOrganization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType, RequireFields<MutationDeleteOrganizationArgs, 'id'>>;
-  deletePost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, RequireFields<MutationDeletePostArgs, 'id'>>;
-  deleteTag?: Resolver<ResolversTypes['Tag'], ParentType, ContextType, RequireFields<MutationDeleteTagArgs, 'id'>>;
-  login?: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<MutationLoginArgs, 'email' | 'password'>>;
-  logout?: Resolver<ResolversTypes['MessagePayload'], ParentType, ContextType>;
-  refreshToken?: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType>;
-  removeUserFromOrganization?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationRemoveUserFromOrganizationArgs, 'organizationId' | 'userId'>>;
-  signup?: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<MutationSignupArgs, 'email' | 'name' | 'password'>>;
-  updateOrganization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType, RequireFields<MutationUpdateOrganizationArgs, 'id' | 'name'>>;
-  updatePost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, RequireFields<MutationUpdatePostArgs, 'id'>>;
-  updateTag?: Resolver<ResolversTypes['Tag'], ParentType, ContextType, RequireFields<MutationUpdateTagArgs, 'id' | 'name'>>;
-  updateUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<MutationUpdateUserArgs>>;
+  addUserToOrganization?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationAddUserToOrganizationArgs, 'organizationId' | 'userId'>>;
+  createOrganization?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationCreateOrganizationArgs, 'name'>>;
+  createPost?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationCreatePostArgs, 'content' | 'organizationId' | 'title'>>;
+  createTag?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationCreateTagArgs, 'name'>>;
+  deleteOrganization?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationDeleteOrganizationArgs, 'id'>>;
+  deletePost?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationDeletePostArgs, 'id'>>;
+  deleteTag?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationDeleteTagArgs, 'id'>>;
+  login?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationLoginArgs, 'email' | 'password'>>;
+  logout?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType>;
+  refreshToken?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType>;
+  removeUserFromOrganization?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationRemoveUserFromOrganizationArgs, 'organizationId' | 'userId'>>;
+  signup?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationSignupArgs, 'email' | 'name' | 'password'>>;
+  updateOrganization?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationUpdateOrganizationArgs, 'id' | 'name'>>;
+  updatePost?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationUpdatePostArgs, 'id'>>;
+  updateTag?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, RequireFields<MutationUpdateTagArgs, 'id' | 'name'>>;
+  updateUser?: Resolver<ResolversTypes['APIResponse'], ParentType, ContextType, Partial<MutationUpdateUserArgs>>;
 }>;
 
 export type OrganizationResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Organization'] = ResolversParentTypes['Organization']> = ResolversObject<{
@@ -352,6 +432,12 @@ export type OrganizationResolvers<ContextType = Context, ParentType extends Reso
   organizationUsers?: Resolver<Array<ResolversTypes['OrganizationUser']>, ParentType, ContextType>;
   posts?: Resolver<Array<ResolversTypes['Post']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+}>;
+
+export type OrganizationSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['OrganizationSuccess'] = ResolversParentTypes['OrganizationSuccess']> = ResolversObject<{
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
 export type OrganizationUserResolvers<ContextType = Context, ParentType extends ResolversParentTypes['OrganizationUser'] = ResolversParentTypes['OrganizationUser']> = ResolversObject<{
@@ -373,6 +459,12 @@ export type PostResolvers<ContextType = Context, ParentType extends ResolversPar
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
+export type PostSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['PostSuccess'] = ResolversParentTypes['PostSuccess']> = ResolversObject<{
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  post?: Resolver<ResolversTypes['Post'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   organization?: Resolver<Maybe<ResolversTypes['Organization']>, ParentType, ContextType, RequireFields<QueryOrganizationArgs, 'id'>>;
@@ -392,21 +484,40 @@ export type TagResolvers<ContextType = Context, ParentType extends ResolversPare
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
+export type TagSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['TagSuccess'] = ResolversParentTypes['TagSuccess']> = ResolversObject<{
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tag?: Resolver<ResolversTypes['Tag'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
 export type UserResolvers<ContextType = Context, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = ResolversObject<{
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
+export type UserSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['UserSuccess'] = ResolversParentTypes['UserSuccess']> = ResolversObject<{
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
 export type Resolvers<ContextType = Context> = ResolversObject<{
-  AuthPayload?: AuthPayloadResolvers<ContextType>;
-  MessagePayload?: MessagePayloadResolvers<ContextType>;
+  APIError?: ApiErrorResolvers<ContextType>;
+  APIResponse?: ApiResponseResolvers<ContextType>;
+  AuthSuccess?: AuthSuccessResolvers<ContextType>;
+  MembershipSuccess?: MembershipSuccessResolvers<ContextType>;
+  MessageSuccess?: MessageSuccessResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Organization?: OrganizationResolvers<ContextType>;
+  OrganizationSuccess?: OrganizationSuccessResolvers<ContextType>;
   OrganizationUser?: OrganizationUserResolvers<ContextType>;
   Post?: PostResolvers<ContextType>;
+  PostSuccess?: PostSuccessResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Tag?: TagResolvers<ContextType>;
+  TagSuccess?: TagSuccessResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
+  UserSuccess?: UserSuccessResolvers<ContextType>;
 }>;
 

@@ -1,4 +1,3 @@
-import { GraphQLError } from "graphql";
 import { eq } from "drizzle-orm";
 import db from "../../db";
 import { users } from "../../db/schema";
@@ -7,6 +6,12 @@ import { requireUser } from "../../libs/auth";
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from "../../libs/cookies";
 import { generateToken, verifyToken } from "../../libs/jwt";
 import type { Resolvers } from "../../types/generated";
+import {
+  apiError,
+  authSuccess,
+  messageSuccess,
+  userSuccess,
+} from "../shared/response";
 
 function issueTokens(context: Context, userId: string) {
   const accessToken = generateToken(userId, "access");
@@ -24,9 +29,7 @@ const resolvers: Resolvers = {
         .where(eq(users.email, args.email))
         .limit(1);
       if (existing[0]) {
-        throw new GraphQLError("Email already in use", {
-          extensions: { code: "BAD_USER_INPUT" },
-        });
+        return apiError("Email already in use", "BAD_USER_INPUT");
       }
 
       const [user] = await db
@@ -37,14 +40,10 @@ const resolvers: Resolvers = {
           password: args.password,
         })
         .returning();
+      if (!user) return apiError("Failed to create user", "INTERNAL");
 
-      const accessToken = issueTokens(context, user!.id);
-      return {
-        message: "User created successfully",
-        status: "success",
-        accessToken,
-        data: user,
-      };
+      const accessToken = issueTokens(context, user.id);
+      return authSuccess("User created successfully", accessToken, user);
     },
 
     login: async (_parent, args, context) => {
@@ -55,34 +54,22 @@ const resolvers: Resolvers = {
         .limit(1);
 
       if (!user || user.password !== args.password) {
-        throw new GraphQLError("Invalid email or password", {
-          extensions: { code: "UNAUTHENTICATED" },
-        });
+        return apiError("Invalid email or password", "UNAUTHENTICATED");
       }
 
       const accessToken = issueTokens(context, user.id);
-      return {
-        message: "Login successful",
-        status: "success",
-        accessToken,
-        data: user,
-      };
+      return authSuccess("Login successful", accessToken, user);
     },
 
     logout: async (_parent, _args, context) => {
       clearRefreshToken(context.res);
-      return {
-        message: "Logged out",
-        status: "success",
-      };
+      return messageSuccess("Logged out");
     },
 
     refreshToken: async (_parent, _args, context) => {
       const token = getRefreshToken(context.req);
       if (!token) {
-        throw new GraphQLError("No refresh token", {
-          extensions: { code: "UNAUTHENTICATED" },
-        });
+        return apiError("No refresh token", "UNAUTHENTICATED");
       }
 
       let payload;
@@ -90,17 +77,11 @@ const resolvers: Resolvers = {
         payload = verifyToken(token, "refresh");
       } catch {
         clearRefreshToken(context.res);
-        throw new GraphQLError("Invalid refresh token", {
-          extensions: { code: "UNAUTHENTICATED" },
-        });
+        return apiError("Invalid refresh token", "UNAUTHENTICATED");
       }
 
       const accessToken = issueTokens(context, payload.userId);
-      return {
-        message: "Token refreshed",
-        status: "success",
-        accessToken,
-      };
+      return authSuccess("Token refreshed", accessToken);
     },
 
     updateUser: async (_parent, args, context) => {
@@ -115,7 +96,8 @@ const resolvers: Resolvers = {
         })
         .where(eq(users.id, auth.userId))
         .returning();
-      return user ?? null;
+      if (!user) return apiError("User not found", "NOT_FOUND");
+      return userSuccess("User updated", user);
     },
   },
 
