@@ -112,7 +112,8 @@ const resolvers: Resolvers = {
       return user ?? null;
     },
 
-    users: async () => {
+    users: async (_parent, _args, context) => {
+      requireUser(context);
       return db.select().from(users);
     },
   },
