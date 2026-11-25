@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { asc, eq, gt } from "drizzle-orm";
 import db from "../../db";
 import { organizations, posts, users } from "../../db/schema";
 import type { postType } from "../../db/schema";
 import { notFound, requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
+import { pageSize, paginate } from "../shared/pagination";
 import { apiError, postSuccess } from "../shared/response";
 import type { PostParent } from "./types";
 
@@ -84,10 +85,16 @@ const resolvers: Resolvers = {
   },
 
   Query: {
-    posts: async (_parent, _args, context) => {
+    posts: async (_parent, args, context) => {
       requireUser(context);
-      const rows = await db.select().from(posts);
-      return rows.map(toPost);
+      const first = pageSize(args.first);
+      const rows = await db
+        .select()
+        .from(posts)
+        .where(args.after ? gt(posts.id, args.after) : undefined)
+        .orderBy(asc(posts.id))
+        .limit(first + 1);
+      return paginate(rows.map(toPost), first);
     },
 
     post: async (_parent, args, context) => {

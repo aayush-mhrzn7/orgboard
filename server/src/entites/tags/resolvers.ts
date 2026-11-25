@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { asc, eq, gt } from "drizzle-orm";
 import db from "../../db";
 import { tags } from "../../db/schema";
 import type { tagType } from "../../db/schema";
 import { requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
+import { pageSize, paginate } from "../shared/pagination";
 import { apiError, tagSuccess } from "../shared/response";
 
 function toTag(row: tagType) {
@@ -50,10 +51,16 @@ const resolvers: Resolvers = {
   },
 
   Query: {
-    tags: async (_parent, _args, context) => {
+    tags: async (_parent, args, context) => {
       requireUser(context);
-      const rows = await db.select().from(tags);
-      return rows.map(toTag);
+      const first = pageSize(args.first);
+      const rows = await db
+        .select()
+        .from(tags)
+        .where(args.after ? gt(tags.id, args.after) : undefined)
+        .orderBy(asc(tags.id))
+        .limit(first + 1);
+      return paginate(rows.map(toTag), first);
     },
 
     tag: async (_parent, args, context) => {

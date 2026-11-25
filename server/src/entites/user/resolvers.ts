@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { asc, eq, gt } from "drizzle-orm";
 import db from "../../db";
 import { users } from "../../db/schema";
 import type { Context } from "../../context";
@@ -6,6 +6,7 @@ import { requireUser } from "../../libs/auth";
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from "../../libs/cookies";
 import { generateToken, verifyToken } from "../../libs/jwt";
 import type { Resolvers } from "../../types/generated";
+import { pageSize, paginate } from "../shared/pagination";
 import {
   apiError,
   authSuccess,
@@ -112,9 +113,16 @@ const resolvers: Resolvers = {
       return user ?? null;
     },
 
-    users: async (_parent, _args, context) => {
+    users: async (_parent, args, context) => {
       requireUser(context);
-      return db.select().from(users);
+      const first = pageSize(args.first);
+      const rows = await db
+        .select()
+        .from(users)
+        .where(args.after ? gt(users.id, args.after) : undefined)
+        .orderBy(asc(users.id))
+        .limit(first + 1);
+      return paginate(rows, first);
     },
   },
 };

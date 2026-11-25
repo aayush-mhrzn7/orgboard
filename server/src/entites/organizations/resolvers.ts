@@ -1,10 +1,11 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, gt } from "drizzle-orm";
 import db from "../../db";
 import { organizations, organizationUsers, posts, users } from "../../db/schema";
 import type { organizationType, organizationUserType } from "../../db/schema";
 import { notFound, requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
 import { toPost } from "../posts/resolvers";
+import { pageSize, paginate } from "../shared/pagination";
 import {
   apiError,
   membershipSuccess,
@@ -32,22 +33,38 @@ function toOrganizationUser(row: organizationUserType): OrganizationUserParent {
 
 const resolvers: Resolvers = {
   Organization: {
-    organizationUsers: async (parent, _args, context) => {
+    organizationUsers: async (parent, args, context) => {
       requireUser(context);
+      const first = pageSize(args.first);
       const rows = await db
         .select()
         .from(organizationUsers)
-        .where(eq(organizationUsers.organizationId, parent.id));
-      return rows.map(toOrganizationUser);
+        .where(
+          and(
+            eq(organizationUsers.organizationId, parent.id),
+            args.after ? gt(organizationUsers.userId, args.after) : undefined,
+          ),
+        )
+        .orderBy(asc(organizationUsers.userId))
+        .limit(first + 1);
+      return paginate(rows.map(toOrganizationUser), first, (r) => r.userId);
     },
 
-    posts: async (parent, _args, context) => {
+    posts: async (parent, args, context) => {
       requireUser(context);
+      const first = pageSize(args.first);
       const rows = await db
         .select()
         .from(posts)
-        .where(eq(posts.organizationId, parent.id));
-      return rows.map(toPost);
+        .where(
+          and(
+            eq(posts.organizationId, parent.id),
+            args.after ? gt(posts.id, args.after) : undefined,
+          ),
+        )
+        .orderBy(asc(posts.id))
+        .limit(first + 1);
+      return paginate(rows.map(toPost), first);
     },
   },
 
@@ -168,10 +185,16 @@ const resolvers: Resolvers = {
   },
 
   Query: {
-    organizations: async (_parent, _args, context) => {
+    organizations: async (_parent, args, context) => {
       requireUser(context);
-      const rows = await db.select().from(organizations);
-      return rows.map(toOrganization);
+      const first = pageSize(args.first);
+      const rows = await db
+        .select()
+        .from(organizations)
+        .where(args.after ? gt(organizations.id, args.after) : undefined)
+        .orderBy(asc(organizations.id))
+        .limit(first + 1);
+      return paginate(rows.map(toOrganization), first);
     },
 
     organization: async (_parent, args, context) => {
@@ -186,11 +209,19 @@ const resolvers: Resolvers = {
 
     organizationUsers: async (_parent, args, context) => {
       requireUser(context);
+      const first = pageSize(args.first);
       const rows = await db
         .select()
         .from(organizationUsers)
-        .where(eq(organizationUsers.organizationId, args.organizationId));
-      return rows.map(toOrganizationUser);
+        .where(
+          and(
+            eq(organizationUsers.organizationId, args.organizationId),
+            args.after ? gt(organizationUsers.userId, args.after) : undefined,
+          ),
+        )
+        .orderBy(asc(organizationUsers.userId))
+        .limit(first + 1);
+      return paginate(rows.map(toOrganizationUser), first, (r) => r.userId);
     },
   },
 };

@@ -5,8 +5,18 @@ type Tag {
   updatedAt: String!
 }
 
+type TagEdge {
+  cursor: String!
+  node: Tag!
+}
+
+type TagConnection {
+  edges: [TagEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
-  tags: [Tag!]!
+  tags(first: Int = 20, after: String): TagConnection!
   tag(id: ID!): Tag
 }
 

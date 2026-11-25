@@ -149,9 +149,33 @@ export type Organization = {
   createdAt: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  organizationUsers: Array<OrganizationUser>;
-  posts: Array<Post>;
+  organizationUsers: OrganizationUserConnection;
+  posts: PostConnection;
   updatedAt: Scalars['String']['output'];
+};
+
+
+export type OrganizationOrganizationUsersArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type OrganizationPostsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type OrganizationConnection = {
+  __typename?: 'OrganizationConnection';
+  edges: Array<OrganizationEdge>;
+  pageInfo: PageInfo;
+};
+
+export type OrganizationEdge = {
+  __typename?: 'OrganizationEdge';
+  cursor: Scalars['String']['output'];
+  node: Organization;
 };
 
 export type OrganizationSuccess = {
@@ -169,6 +193,24 @@ export type OrganizationUser = {
   userId: Scalars['ID']['output'];
 };
 
+export type OrganizationUserConnection = {
+  __typename?: 'OrganizationUserConnection';
+  edges: Array<OrganizationUserEdge>;
+  pageInfo: PageInfo;
+};
+
+export type OrganizationUserEdge = {
+  __typename?: 'OrganizationUserEdge';
+  cursor: Scalars['String']['output'];
+  node: OrganizationUser;
+};
+
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+};
+
 export type Post = {
   __typename?: 'Post';
   author: User;
@@ -181,6 +223,18 @@ export type Post = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type PostConnection = {
+  __typename?: 'PostConnection';
+  edges: Array<PostEdge>;
+  pageInfo: PageInfo;
+};
+
+export type PostEdge = {
+  __typename?: 'PostEdge';
+  cursor: Scalars['String']['output'];
+  node: Post;
+};
+
 export type PostSuccess = {
   __typename?: 'PostSuccess';
   message: Scalars['String']['output'];
@@ -191,13 +245,13 @@ export type Query = {
   __typename?: 'Query';
   me?: Maybe<User>;
   organization?: Maybe<Organization>;
-  organizationUsers: Array<OrganizationUser>;
-  organizations: Array<Organization>;
+  organizationUsers: OrganizationUserConnection;
+  organizations: OrganizationConnection;
   post?: Maybe<Post>;
-  posts: Array<Post>;
+  posts: PostConnection;
   tag?: Maybe<Tag>;
-  tags: Array<Tag>;
-  users: Array<User>;
+  tags: TagConnection;
+  users: UserConnection;
 };
 
 
@@ -207,7 +261,15 @@ export type QueryOrganizationArgs = {
 
 
 export type QueryOrganizationUsersArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
   organizationId: Scalars['ID']['input'];
+};
+
+
+export type QueryOrganizationsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -216,8 +278,26 @@ export type QueryPostArgs = {
 };
 
 
+export type QueryPostsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryTagArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryTagsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryUsersArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type Tag = {
@@ -226,6 +306,18 @@ export type Tag = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
+};
+
+export type TagConnection = {
+  __typename?: 'TagConnection';
+  edges: Array<TagEdge>;
+  pageInfo: PageInfo;
+};
+
+export type TagEdge = {
+  __typename?: 'TagEdge';
+  cursor: Scalars['String']['output'];
+  node: Tag;
 };
 
 export type TagSuccess = {
@@ -239,6 +331,18 @@ export type User = {
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+};
+
+export type UserConnection = {
+  __typename?: 'UserConnection';
+  edges: Array<UserEdge>;
+  pageInfo: PageInfo;
+};
+
+export type UserEdge = {
+  __typename?: 'UserEdge';
+  cursor: Scalars['String']['output'];
+  node: User;
 };
 
 export type UserSuccess = {
@@ -339,19 +443,31 @@ export type ResolversTypes = ResolversObject<{
   AuthSuccess: ResolverTypeWrapper<AuthSuccess>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
+  Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   MembershipSuccess: ResolverTypeWrapper<MembershipSuccess>;
   MessageSuccess: ResolverTypeWrapper<MessageSuccess>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Organization: ResolverTypeWrapper<OrganizationParent>;
+  OrganizationConnection: ResolverTypeWrapper<Omit<OrganizationConnection, 'edges'> & { edges: Array<ResolversTypes['OrganizationEdge']> }>;
+  OrganizationEdge: ResolverTypeWrapper<Omit<OrganizationEdge, 'node'> & { node: ResolversTypes['Organization'] }>;
   OrganizationSuccess: ResolverTypeWrapper<Omit<OrganizationSuccess, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   OrganizationUser: ResolverTypeWrapper<OrganizationUserParent>;
+  OrganizationUserConnection: ResolverTypeWrapper<Omit<OrganizationUserConnection, 'edges'> & { edges: Array<ResolversTypes['OrganizationUserEdge']> }>;
+  OrganizationUserEdge: ResolverTypeWrapper<Omit<OrganizationUserEdge, 'node'> & { node: ResolversTypes['OrganizationUser'] }>;
+  PageInfo: ResolverTypeWrapper<PageInfo>;
   Post: ResolverTypeWrapper<PostParent>;
+  PostConnection: ResolverTypeWrapper<Omit<PostConnection, 'edges'> & { edges: Array<ResolversTypes['PostEdge']> }>;
+  PostEdge: ResolverTypeWrapper<Omit<PostEdge, 'node'> & { node: ResolversTypes['Post'] }>;
   PostSuccess: ResolverTypeWrapper<Omit<PostSuccess, 'post'> & { post: ResolversTypes['Post'] }>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Tag: ResolverTypeWrapper<Tag>;
+  TagConnection: ResolverTypeWrapper<TagConnection>;
+  TagEdge: ResolverTypeWrapper<TagEdge>;
   TagSuccess: ResolverTypeWrapper<TagSuccess>;
   User: ResolverTypeWrapper<User>;
+  UserConnection: ResolverTypeWrapper<UserConnection>;
+  UserEdge: ResolverTypeWrapper<UserEdge>;
   UserSuccess: ResolverTypeWrapper<UserSuccess>;
 }>;
 
@@ -362,19 +478,31 @@ export type ResolversParentTypes = ResolversObject<{
   AuthSuccess: AuthSuccess;
   Boolean: Scalars['Boolean']['output'];
   ID: Scalars['ID']['output'];
+  Int: Scalars['Int']['output'];
   MembershipSuccess: MembershipSuccess;
   MessageSuccess: MessageSuccess;
   Mutation: Record<PropertyKey, never>;
   Organization: OrganizationParent;
+  OrganizationConnection: Omit<OrganizationConnection, 'edges'> & { edges: Array<ResolversParentTypes['OrganizationEdge']> };
+  OrganizationEdge: Omit<OrganizationEdge, 'node'> & { node: ResolversParentTypes['Organization'] };
   OrganizationSuccess: Omit<OrganizationSuccess, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   OrganizationUser: OrganizationUserParent;
+  OrganizationUserConnection: Omit<OrganizationUserConnection, 'edges'> & { edges: Array<ResolversParentTypes['OrganizationUserEdge']> };
+  OrganizationUserEdge: Omit<OrganizationUserEdge, 'node'> & { node: ResolversParentTypes['OrganizationUser'] };
+  PageInfo: PageInfo;
   Post: PostParent;
+  PostConnection: Omit<PostConnection, 'edges'> & { edges: Array<ResolversParentTypes['PostEdge']> };
+  PostEdge: Omit<PostEdge, 'node'> & { node: ResolversParentTypes['Post'] };
   PostSuccess: Omit<PostSuccess, 'post'> & { post: ResolversParentTypes['Post'] };
   Query: Record<PropertyKey, never>;
   String: Scalars['String']['output'];
   Tag: Tag;
+  TagConnection: TagConnection;
+  TagEdge: TagEdge;
   TagSuccess: TagSuccess;
   User: User;
+  UserConnection: UserConnection;
+  UserEdge: UserEdge;
   UserSuccess: UserSuccess;
 }>;
 
@@ -429,9 +557,19 @@ export type OrganizationResolvers<ContextType = Context, ParentType extends Reso
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  organizationUsers?: Resolver<Array<ResolversTypes['OrganizationUser']>, ParentType, ContextType>;
-  posts?: Resolver<Array<ResolversTypes['Post']>, ParentType, ContextType>;
+  organizationUsers?: Resolver<ResolversTypes['OrganizationUserConnection'], ParentType, ContextType, RequireFields<OrganizationOrganizationUsersArgs, 'first'>>;
+  posts?: Resolver<ResolversTypes['PostConnection'], ParentType, ContextType, RequireFields<OrganizationPostsArgs, 'first'>>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+}>;
+
+export type OrganizationConnectionResolvers<ContextType = Context, ParentType extends ResolversParentTypes['OrganizationConnection'] = ResolversParentTypes['OrganizationConnection']> = ResolversObject<{
+  edges?: Resolver<Array<ResolversTypes['OrganizationEdge']>, ParentType, ContextType>;
+  pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
+}>;
+
+export type OrganizationEdgeResolvers<ContextType = Context, ParentType extends ResolversParentTypes['OrganizationEdge'] = ResolversParentTypes['OrganizationEdge']> = ResolversObject<{
+  cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  node?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
 }>;
 
 export type OrganizationSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['OrganizationSuccess'] = ResolversParentTypes['OrganizationSuccess']> = ResolversObject<{
@@ -448,6 +586,21 @@ export type OrganizationUserResolvers<ContextType = Context, ParentType extends 
   userId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
 }>;
 
+export type OrganizationUserConnectionResolvers<ContextType = Context, ParentType extends ResolversParentTypes['OrganizationUserConnection'] = ResolversParentTypes['OrganizationUserConnection']> = ResolversObject<{
+  edges?: Resolver<Array<ResolversTypes['OrganizationUserEdge']>, ParentType, ContextType>;
+  pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
+}>;
+
+export type OrganizationUserEdgeResolvers<ContextType = Context, ParentType extends ResolversParentTypes['OrganizationUserEdge'] = ResolversParentTypes['OrganizationUserEdge']> = ResolversObject<{
+  cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  node?: Resolver<ResolversTypes['OrganizationUser'], ParentType, ContextType>;
+}>;
+
+export type PageInfoResolvers<ContextType = Context, ParentType extends ResolversParentTypes['PageInfo'] = ResolversParentTypes['PageInfo']> = ResolversObject<{
+  endCursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  hasNextPage?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+}>;
+
 export type PostResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Post'] = ResolversParentTypes['Post']> = ResolversObject<{
   author?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
   authorId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
@@ -459,6 +612,16 @@ export type PostResolvers<ContextType = Context, ParentType extends ResolversPar
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
+export type PostConnectionResolvers<ContextType = Context, ParentType extends ResolversParentTypes['PostConnection'] = ResolversParentTypes['PostConnection']> = ResolversObject<{
+  edges?: Resolver<Array<ResolversTypes['PostEdge']>, ParentType, ContextType>;
+  pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
+}>;
+
+export type PostEdgeResolvers<ContextType = Context, ParentType extends ResolversParentTypes['PostEdge'] = ResolversParentTypes['PostEdge']> = ResolversObject<{
+  cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  node?: Resolver<ResolversTypes['Post'], ParentType, ContextType>;
+}>;
+
 export type PostSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['PostSuccess'] = ResolversParentTypes['PostSuccess']> = ResolversObject<{
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   post?: Resolver<ResolversTypes['Post'], ParentType, ContextType>;
@@ -468,13 +631,13 @@ export type PostSuccessResolvers<ContextType = Context, ParentType extends Resol
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   organization?: Resolver<Maybe<ResolversTypes['Organization']>, ParentType, ContextType, RequireFields<QueryOrganizationArgs, 'id'>>;
-  organizationUsers?: Resolver<Array<ResolversTypes['OrganizationUser']>, ParentType, ContextType, RequireFields<QueryOrganizationUsersArgs, 'organizationId'>>;
-  organizations?: Resolver<Array<ResolversTypes['Organization']>, ParentType, ContextType>;
+  organizationUsers?: Resolver<ResolversTypes['OrganizationUserConnection'], ParentType, ContextType, RequireFields<QueryOrganizationUsersArgs, 'first' | 'organizationId'>>;
+  organizations?: Resolver<ResolversTypes['OrganizationConnection'], ParentType, ContextType, RequireFields<QueryOrganizationsArgs, 'first'>>;
   post?: Resolver<Maybe<ResolversTypes['Post']>, ParentType, ContextType, RequireFields<QueryPostArgs, 'id'>>;
-  posts?: Resolver<Array<ResolversTypes['Post']>, ParentType, ContextType>;
+  posts?: Resolver<ResolversTypes['PostConnection'], ParentType, ContextType, RequireFields<QueryPostsArgs, 'first'>>;
   tag?: Resolver<Maybe<ResolversTypes['Tag']>, ParentType, ContextType, RequireFields<QueryTagArgs, 'id'>>;
-  tags?: Resolver<Array<ResolversTypes['Tag']>, ParentType, ContextType>;
-  users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
+  tags?: Resolver<ResolversTypes['TagConnection'], ParentType, ContextType, RequireFields<QueryTagsArgs, 'first'>>;
+  users?: Resolver<ResolversTypes['UserConnection'], ParentType, ContextType, RequireFields<QueryUsersArgs, 'first'>>;
 }>;
 
 export type TagResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Tag'] = ResolversParentTypes['Tag']> = ResolversObject<{
@@ -482,6 +645,16 @@ export type TagResolvers<ContextType = Context, ParentType extends ResolversPare
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+}>;
+
+export type TagConnectionResolvers<ContextType = Context, ParentType extends ResolversParentTypes['TagConnection'] = ResolversParentTypes['TagConnection']> = ResolversObject<{
+  edges?: Resolver<Array<ResolversTypes['TagEdge']>, ParentType, ContextType>;
+  pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
+}>;
+
+export type TagEdgeResolvers<ContextType = Context, ParentType extends ResolversParentTypes['TagEdge'] = ResolversParentTypes['TagEdge']> = ResolversObject<{
+  cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  node?: Resolver<ResolversTypes['Tag'], ParentType, ContextType>;
 }>;
 
 export type TagSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['TagSuccess'] = ResolversParentTypes['TagSuccess']> = ResolversObject<{
@@ -494,6 +667,16 @@ export type UserResolvers<ContextType = Context, ParentType extends ResolversPar
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+}>;
+
+export type UserConnectionResolvers<ContextType = Context, ParentType extends ResolversParentTypes['UserConnection'] = ResolversParentTypes['UserConnection']> = ResolversObject<{
+  edges?: Resolver<Array<ResolversTypes['UserEdge']>, ParentType, ContextType>;
+  pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
+}>;
+
+export type UserEdgeResolvers<ContextType = Context, ParentType extends ResolversParentTypes['UserEdge'] = ResolversParentTypes['UserEdge']> = ResolversObject<{
+  cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  node?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
 }>;
 
 export type UserSuccessResolvers<ContextType = Context, ParentType extends ResolversParentTypes['UserSuccess'] = ResolversParentTypes['UserSuccess']> = ResolversObject<{
@@ -510,14 +693,25 @@ export type Resolvers<ContextType = Context> = ResolversObject<{
   MessageSuccess?: MessageSuccessResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Organization?: OrganizationResolvers<ContextType>;
+  OrganizationConnection?: OrganizationConnectionResolvers<ContextType>;
+  OrganizationEdge?: OrganizationEdgeResolvers<ContextType>;
   OrganizationSuccess?: OrganizationSuccessResolvers<ContextType>;
   OrganizationUser?: OrganizationUserResolvers<ContextType>;
+  OrganizationUserConnection?: OrganizationUserConnectionResolvers<ContextType>;
+  OrganizationUserEdge?: OrganizationUserEdgeResolvers<ContextType>;
+  PageInfo?: PageInfoResolvers<ContextType>;
   Post?: PostResolvers<ContextType>;
+  PostConnection?: PostConnectionResolvers<ContextType>;
+  PostEdge?: PostEdgeResolvers<ContextType>;
   PostSuccess?: PostSuccessResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Tag?: TagResolvers<ContextType>;
+  TagConnection?: TagConnectionResolvers<ContextType>;
+  TagEdge?: TagEdgeResolvers<ContextType>;
   TagSuccess?: TagSuccessResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
+  UserConnection?: UserConnectionResolvers<ContextType>;
+  UserEdge?: UserEdgeResolvers<ContextType>;
   UserSuccess?: UserSuccessResolvers<ContextType>;
 }>;
 

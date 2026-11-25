@@ -4,9 +4,19 @@ type User {
   email: String!
 }
 
+type UserEdge {
+  cursor: String!
+  node: User!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
   me: User
-  users: [User!]!
+  users(first: Int = 20, after: String): UserConnection!
 }
 
 type Mutation {

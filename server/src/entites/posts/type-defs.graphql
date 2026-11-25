@@ -9,8 +9,18 @@ type Post {
   updatedAt: String!
 }
 
+type PostEdge {
+  cursor: String!
+  node: Post!
+}
+
+type PostConnection {
+  edges: [PostEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
-  posts: [Post!]!
+  posts(first: Int = 20, after: String): PostConnection!
   post(id: ID!): Post
 }
 
