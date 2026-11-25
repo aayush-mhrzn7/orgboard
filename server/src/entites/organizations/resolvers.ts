@@ -1,10 +1,10 @@
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, desc, eq, gt } from "drizzle-orm";
 import db from "../../db";
 import { organizations, organizationUsers, posts, users } from "../../db/schema";
 import type { organizationType, organizationUserType } from "../../db/schema";
 import { notFound, requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
-import { toPost } from "../posts/resolvers";
+import { postsAfter, toPost } from "../posts/resolvers";
 import { pageSize, paginate } from "../shared/pagination";
 import {
   apiError,
@@ -57,12 +57,9 @@ const resolvers: Resolvers = {
         .select()
         .from(posts)
         .where(
-          and(
-            eq(posts.organizationId, parent.id),
-            args.after ? gt(posts.id, args.after) : undefined,
-          ),
+          and(eq(posts.organizationId, parent.id), await postsAfter(args.after)),
         )
-        .orderBy(asc(posts.id))
+        .orderBy(desc(posts.createdAt), desc(posts.id))
         .limit(first + 1);
       return paginate(rows.map(toPost), first);
     },
@@ -186,23 +183,51 @@ const resolvers: Resolvers = {
 
   Query: {
     organizations: async (_parent, args, context) => {
-      requireUser(context);
+      const auth = requireUser(context);
       const first = pageSize(args.first);
       const rows = await db
-        .select()
+        .select({
+          id: organizations.id,
+          name: organizations.name,
+          createdAt: organizations.createdAt,
+          updatedAt: organizations.updatedAt,
+        })
         .from(organizations)
-        .where(args.after ? gt(organizations.id, args.after) : undefined)
+        .innerJoin(
+          organizationUsers,
+          eq(organizationUsers.organizationId, organizations.id),
+        )
+        .where(
+          and(
+            eq(organizationUsers.userId, auth.userId),
+            args.after ? gt(organizations.id, args.after) : undefined,
+          ),
+        )
         .orderBy(asc(organizations.id))
         .limit(first + 1);
       return paginate(rows.map(toOrganization), first);
     },
 
     organization: async (_parent, args, context) => {
-      requireUser(context);
+      const auth = requireUser(context);
       const [organization] = await db
-        .select()
+        .select({
+          id: organizations.id,
+          name: organizations.name,
+          createdAt: organizations.createdAt,
+          updatedAt: organizations.updatedAt,
+        })
         .from(organizations)
-        .where(eq(organizations.id, args.id))
+        .innerJoin(
+          organizationUsers,
+          eq(organizationUsers.organizationId, organizations.id),
+        )
+        .where(
+          and(
+            eq(organizations.id, args.id),
+            eq(organizationUsers.userId, auth.userId),
+          ),
+        )
         .limit(1);
       return organization ? toOrganization(organization) : null;
     },

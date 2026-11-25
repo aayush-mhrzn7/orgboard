@@ -1,6 +1,6 @@
-import { asc, eq, gt } from "drizzle-orm";
+import { and, desc, eq, lt, or, type SQL } from "drizzle-orm";
 import db from "../../db";
-import { organizations, posts, users } from "../../db/schema";
+import { organizationUsers, posts, users } from "../../db/schema";
 import type { postType } from "../../db/schema";
 import { notFound, requireUser } from "../../libs/auth";
 import type { Resolvers } from "../../types/generated";
@@ -18,6 +18,21 @@ export function toPost(row: postType): PostParent {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+/** Cursor page for newest-first (`createdAt` desc, `id` desc). */
+export async function postsAfter(after?: string | null): Promise<SQL | undefined> {
+  if (!after) return undefined;
+  const [cursor] = await db
+    .select({ id: posts.id, createdAt: posts.createdAt })
+    .from(posts)
+    .where(eq(posts.id, after))
+    .limit(1);
+  if (!cursor) return undefined;
+  return or(
+    lt(posts.createdAt, cursor.createdAt),
+    and(eq(posts.createdAt, cursor.createdAt), lt(posts.id, cursor.id)),
+  );
 }
 
 const resolvers: Resolvers = {
@@ -38,12 +53,17 @@ const resolvers: Resolvers = {
   Mutation: {
     createPost: async (_parent, args, context) => {
       const auth = requireUser(context);
-      const [organization] = await db
+      const [membership] = await db
         .select()
-        .from(organizations)
-        .where(eq(organizations.id, args.organizationId))
+        .from(organizationUsers)
+        .where(
+          and(
+            eq(organizationUsers.organizationId, args.organizationId),
+            eq(organizationUsers.userId, auth.userId),
+          ),
+        )
         .limit(1);
-      if (!organization) return apiError("Organization not found", "NOT_FOUND");
+      if (!membership) return apiError("Organization not found", "NOT_FOUND");
 
       const [post] = await db
         .insert(posts)
@@ -86,23 +106,23 @@ const resolvers: Resolvers = {
 
   Query: {
     posts: async (_parent, args, context) => {
-      requireUser(context);
+      const auth = requireUser(context);
       const first = pageSize(args.first);
       const rows = await db
         .select()
         .from(posts)
-        .where(args.after ? gt(posts.id, args.after) : undefined)
-        .orderBy(asc(posts.id))
+        .where(and(eq(posts.authorId, auth.userId), await postsAfter(args.after)))
+        .orderBy(desc(posts.createdAt), desc(posts.id))
         .limit(first + 1);
       return paginate(rows.map(toPost), first);
     },
 
     post: async (_parent, args, context) => {
-      requireUser(context);
+      const auth = requireUser(context);
       const [post] = await db
         .select()
         .from(posts)
-        .where(eq(posts.id, args.id))
+        .where(and(eq(posts.id, args.id), eq(posts.authorId, auth.userId)))
         .limit(1);
       return post ? toPost(post) : null;
     },

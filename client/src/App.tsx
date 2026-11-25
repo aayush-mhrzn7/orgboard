@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useApolloClient, useMutation, useQuery } from "@apollo/client/react";
 import {
   CreateOrganizationMutation,
   CreatePostMutation,
@@ -7,172 +8,106 @@ import {
   OrganizationsQuery,
   PostsQuery,
 } from "./graphql/operations";
-import type {
-  OrganizationsQuery as OrgsResult,
-  PostsQuery as PostsResult,
-} from "./gql/graphql";
-import { getToken, gqlClient, setToken } from "./lib/graphql";
+import { getToken, setToken } from "./lib/apollo";
 import "./index.css";
 
-const PAGE_SIZE = 10;
-
-type User = { id: string; name: string; email: string };
-type Post = PostsResult["posts"]["edges"][number]["node"];
-type Org = OrgsResult["organizations"]["edges"][number]["node"];
-
 export function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [orgs, setOrgs] = useState<Org[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [endCursor, setEndCursor] = useState<string | null>(null);
+  const client = useApolloClient();
+  const [token, setAuth] = useState(getToken);
+
+  function auth(next: string | null) {
+    setToken(next);
+    setAuth(next);
+    if (!next) client.clearStore();
+  }
+
+  if (!token) return <Login onSuccess={auth} />;
+  return <Home onLogout={() => auth(null)} />;
+}
+
+function Login({ onSuccess }: { onSuccess: (token: string) => void }) {
+  const [login, { loading }] = useMutation(LoginMutation);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
 
-  const loadOrgs = useCallback(async () => {
-    const orgsData = await gqlClient.request(OrganizationsQuery, { first: 50 });
-    setOrgs(orgsData.organizations.edges.map((e) => e.node));
-  }, []);
-
-  const loadPosts = useCallback(async (after?: string | null) => {
-    const data = await gqlClient.request(PostsQuery, {
-      first: PAGE_SIZE,
-      after: after ?? undefined,
-    });
-    const next = data.posts.edges.map((e) => e.node);
-    setPosts((prev) => (after ? [...prev, ...next] : next));
-    setHasNextPage(data.posts.pageInfo.hasNextPage);
-    setEndCursor(data.posts.pageInfo.endCursor ?? null);
-  }, []);
-
-  const loadData = useCallback(async () => {
-    await Promise.all([loadPosts(), loadOrgs()]);
-  }, [loadPosts, loadOrgs]);
-
-  useEffect(() => {
-    if (!getToken()) {
-      setLoading(false);
-      return;
-    }
-    gqlClient
-      .request(MeQuery)
-      .then(async (data) => {
-        if (!data.me) {
-          setToken(null);
-          return;
-        }
-        setUser(data.me);
-        await loadData();
-      })
-      .catch(() => setToken(null))
-      .finally(() => setLoading(false));
-  }, [loadData]);
-
-  async function onLogin(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     const form = new FormData(e.currentTarget);
-    const email = String(form.get("email") ?? "");
-    const password = String(form.get("password") ?? "");
-
-    try {
-      const { login } = await gqlClient.request(LoginMutation, {
-        email,
-        password,
-      });
-      if (login.__typename === "APIError") {
-        setError(login.message);
-        return;
-      }
-      if (login.__typename === "AuthSuccess" && login.accessToken && login.user) {
-        setToken(login.accessToken);
-        setUser(login.user);
-        await loadData();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+    const { data } = await login({
+      variables: {
+        email: String(form.get("email")),
+        password: String(form.get("password")),
+      },
+    });
+    const result = data?.login;
+    if (result?.__typename === "APIError") setError(result.message);
+    else if (result?.__typename === "AuthSuccess" && result.accessToken) {
+      onSuccess(result.accessToken);
     }
   }
 
-  function onLogout() {
-    setToken(null);
-    setUser(null);
-    setPosts([]);
-    setOrgs([]);
-    setHasNextPage(false);
-    setEndCursor(null);
-  }
+  return (
+    <main className="min-h-screen grid place-items-center p-6">
+      <form onSubmit={onSubmit} className="w-full max-w-sm flex flex-col gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight mb-2">Orgboard</h1>
+        <p className="text-sm text-zinc-500 mb-2">
+          Seed: alice@tekvortex.dev / password
+        </p>
+        <input
+          name="email"
+          type="email"
+          required
+          placeholder="Email"
+          defaultValue="alice@tekvortex.dev"
+          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 outline-none focus:border-zinc-400"
+        />
+        <input
+          name="password"
+          type="password"
+          required
+          placeholder="Password"
+          defaultValue="password"
+          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 outline-none focus:border-zinc-400"
+        />
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded-md bg-zinc-100 text-zinc-900 font-medium py-2 hover:bg-white disabled:opacity-50"
+        >
+          Log in
+        </button>
+      </form>
+    </main>
+  );
+}
 
-  async function onLoadMore() {
-    if (!endCursor || loadingMore) return;
-    setLoadingMore(true);
-    setError(null);
-    try {
-      await loadPosts(endCursor);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load more");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
+function Home({ onLogout }: { onLogout: () => void }) {
+  const { data: meData, loading } = useQuery(MeQuery);
+  const { data: orgsData } = useQuery(OrganizationsQuery, {
+    variables: { first: 50 },
+  });
+  const { data: postsData } = useQuery(PostsQuery, {
+    variables: { first: 20 },
+  });
 
-  async function onCreateOrg(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const form = e.currentTarget;
-    const name = String(new FormData(form).get("name") ?? "").trim();
-    if (!name) return;
+  const [createOrg] = useMutation(CreateOrganizationMutation, {
+    refetchQueries: ["Organizations"],
+  });
+  const [createPost] = useMutation(CreatePostMutation, {
+    refetchQueries: ["Posts"],
+  });
+  const [error, setError] = useState<string | null>(null);
 
-    try {
-      const { createOrganization } = await gqlClient.request(
-        CreateOrganizationMutation,
-        { name },
-      );
-      if (createOrganization.__typename === "APIError") {
-        setError(createOrganization.message);
-        return;
-      }
-      if (createOrganization.__typename === "OrganizationSuccess") {
-        form.reset();
-        await loadOrgs();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create org");
-    }
-  }
+  const user = meData?.me;
+  const orgs = orgsData?.organizations.edges.map((e) => e.node) ?? [];
+  const posts = postsData?.posts.edges.map((e) => e.node) ?? [];
 
-  async function onCreatePost(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const form = e.currentTarget;
-    const data = new FormData(form);
-    const title = String(data.get("title") ?? "").trim();
-    const content = String(data.get("content") ?? "").trim();
-    const organizationId = String(data.get("organizationId") ?? "");
-    if (!title || !content || !organizationId) return;
+  useEffect(() => {
+    if (!loading && !user) onLogout();
+  }, [loading, user, onLogout]);
 
-    try {
-      const { createPost } = await gqlClient.request(CreatePostMutation, {
-        title,
-        content,
-        organizationId,
-      });
-      if (createPost.__typename === "APIError") {
-        setError(createPost.message);
-        return;
-      }
-      if (createPost.__typename === "PostSuccess") {
-        form.reset();
-        const post = createPost.post;
-        setPosts((prev) => [post, ...prev.filter((p) => p.id !== post.id)]);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create post");
-    }
-  }
-
-  if (loading) {
+  if (loading || !user) {
     return (
       <main className="min-h-screen grid place-items-center p-6">
         <p className="text-zinc-500">Loading…</p>
@@ -180,45 +115,33 @@ export function App() {
     );
   }
 
-  if (!user) {
-    return (
-      <main className="min-h-screen grid place-items-center p-6">
-        <form
-          onSubmit={onLogin}
-          className="w-full max-w-sm flex flex-col gap-3"
-        >
-          <h1 className="text-2xl font-semibold tracking-tight mb-2">
-            Orgboard
-          </h1>
-          <p className="text-sm text-zinc-500 mb-2">
-            Seed: alice@tekvortex.dev / password
-          </p>
-          <input
-            name="email"
-            type="email"
-            required
-            placeholder="Email"
-            defaultValue="alice@tekvortex.dev"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 outline-none focus:border-zinc-400"
-          />
-          <input
-            name="password"
-            type="password"
-            required
-            placeholder="Password"
-            defaultValue="password"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 outline-none focus:border-zinc-400"
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <button
-            type="submit"
-            className="rounded-md bg-zinc-100 text-zinc-900 font-medium py-2 hover:bg-white"
-          >
-            Log in
-          </button>
-        </form>
-      </main>
-    );
+  async function onCreateOrg(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const form = e.currentTarget;
+    const name = String(new FormData(form).get("name")).trim();
+    if (!name) return;
+    const { data } = await createOrg({ variables: { name } });
+    const result = data?.createOrganization;
+    if (result?.__typename === "APIError") setError(result.message);
+    else form.reset();
+  }
+
+  async function onCreatePost(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const { data } = await createPost({
+      variables: {
+        title: String(fd.get("title")).trim(),
+        content: String(fd.get("content")).trim(),
+        organizationId: String(fd.get("organizationId")),
+      },
+    });
+    const result = data?.createPost;
+    if (result?.__typename === "APIError") setError(result.message);
+    else form.reset();
   }
 
   return (
@@ -338,16 +261,6 @@ export function App() {
             <li className="text-sm text-zinc-500">No posts yet.</li>
           )}
         </ul>
-        {hasNextPage && (
-          <button
-            type="button"
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="mt-4 w-full rounded-md border border-zinc-700 py-2 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50"
-          >
-            {loadingMore ? "Loading…" : "Load more"}
-          </button>
-        )}
       </section>
     </main>
   );

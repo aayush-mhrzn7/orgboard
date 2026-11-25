@@ -1,6 +1,6 @@
 # Orgboard client
 
-Minimal React + Tailwind app talking to the GraphQL API with typed operations (`graphql-codegen` client preset + `graphql-request`).
+Minimal React + Tailwind app talking to the GraphQL API with typed operations (`graphql-codegen` client preset + Apollo Client `useQuery` / `useMutation`).
 
 ## Setup
 

@@ -5,15 +5,15 @@ const users = sqliteTable("users", {
   name: text("name").notNull(),
   email: text("email").unique().notNull(),
   password: text("password").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
 });
 
 const organizations = sqliteTable("organizations", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
 });
 
 const organizationUsers = sqliteTable(
@@ -21,8 +21,8 @@ const organizationUsers = sqliteTable(
   {
     organizationId: text("organization_id").references(() => organizations.id),
     userId: text("user_id").references(() => users.id),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
   },
   (table) => [
     primaryKey({ columns: [table.organizationId, table.userId] }),
@@ -39,15 +39,15 @@ const posts = sqliteTable("posts", {
   content: text("content").notNull(),
   authorId: text("author_id").references(() => users.id),
   organizationId: text("organization_id").references(() => organizations.id),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
 });
 
 const tags = sqliteTable("tags", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
 });
 
 const postTags = sqliteTable(
@@ -55,8 +55,8 @@ const postTags = sqliteTable(
   {
     postId: text("post_id").references(() => posts.id),
     tagId: text("tag_id").references(() => tags.id),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().defaultNow(),
   },
   (table) => [
     primaryKey({ columns: [table.postId, table.tagId] }),
