@@ -32,8 +32,8 @@ export const MeQuery = graphql(`
 `);
 
 export const PostsQuery = graphql(`
-  query Posts($first: Int) {
-    posts(first: $first) {
+  query Posts($first: Int, $after: String) {
+    posts(first: $first, after: $after) {
       edges {
         node {
           id
@@ -48,6 +48,70 @@ export const PostsQuery = graphql(`
       pageInfo {
         hasNextPage
         endCursor
+      }
+    }
+  }
+`);
+
+export const OrganizationsQuery = graphql(`
+  query Organizations($first: Int) {
+    organizations(first: $first) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`);
+
+export const CreateOrganizationMutation = graphql(`
+  mutation CreateOrganization($name: String!) {
+    createOrganization(name: $name) {
+      __typename
+      ... on OrganizationSuccess {
+        message
+        organization {
+          id
+          name
+        }
+      }
+      ... on APIError {
+        message
+        code
+      }
+    }
+  }
+`);
+
+export const CreatePostMutation = graphql(`
+  mutation CreatePost(
+    $title: String!
+    $content: String!
+    $organizationId: ID!
+  ) {
+    createPost(
+      title: $title
+      content: $content
+      organizationId: $organizationId
+    ) {
+      __typename
+      ... on PostSuccess {
+        message
+        post {
+          id
+          title
+          content
+          createdAt
+          author {
+            name
+          }
+        }
+      }
+      ... on APIError {
+        message
+        code
       }
     }
   }
