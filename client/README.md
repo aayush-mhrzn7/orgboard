@@ -1,21 +1,18 @@
-# Orgboard
+# Orgboard client
 
-Client for organizations, members, posts, and tags.
+Minimal React + Tailwind app talking to the GraphQL API with typed operations (`graphql-codegen` client preset + `graphql-request`).
 
-To install dependencies:
+## Setup
 
 ```bash
+# terminal 1 — API (from /server)
+bun run db:seed   # once
+bun run dev       # http://localhost:4000
+
+# terminal 2 — client (from /client)
 bun install
+bun run codegen   # after schema or query changes
+bun run dev
 ```
 
-To start a development server:
-
-```bash
-bun dev
-```
-
-To run for production:
-
-```bash
-bun start
-```
+Seed login: `alice@tekvortex.dev` / `password`
